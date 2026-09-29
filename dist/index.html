@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f1efe9">
+  <meta name="description" content="Add a visible timestamp and update the capture time of your photo, entirely on your device.">
+  <title>Gakin — Photo Timestamp</title>
+  <script>
+    try {
+      const choice = localStorage.getItem('gakin-theme');
+      document.documentElement.dataset.theme = choice === 'light' || choice === 'dark'
+        ? choice : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    } catch {
+      document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%2310110f'/%3E%3Ccircle cx='32' cy='32' r='24' fill='none' stroke='%23ffb84d' stroke-width='4'/%3E%3Cpath d='M32 17v16l11 6' fill='none' stroke='%23ffb84d' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css?v=20260929-16">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Gakin home" data-i18n-aria-label="brandHome">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24"></circle><path d="M32 17v16l11 6"></path></svg></span>
+      <span data-i18n="brandName">Gakin</span>
+    </a>
+    <div class="header-controls">
+    <details class="preference-menu theme-menu" id="themeMenu">
+      <summary aria-haspopup="listbox" aria-label="Choose theme" data-i18n-aria-label="themeLabel">
+        <span id="themeCurrent">Light</span>
+        <svg viewBox="0 0 12 8" aria-hidden="true"><path d="m1 1 5 5 5-5"></path></svg>
+      </summary>
+      <div class="preference-options">
+        <div role="listbox" aria-label="Choose theme" data-i18n-aria-label="themeLabel">
+          <button type="button" class="preference-option theme-option active" data-theme-choice="light" role="option" aria-selected="true" data-i18n="themeLight">Light</button>
+          <button type="button" class="preference-option theme-option" data-theme-choice="dark" role="option" aria-selected="false" data-i18n="themeDark">Dark</button>
+        </div>
+        <button type="button" class="preference-reset" id="themeReset" data-i18n="themeAuto" hidden>Follow device theme</button>
+      </div>
+    </details>
+    <details class="preference-menu language-menu" id="languageMenu">
+      <summary aria-haspopup="listbox" aria-label="언어 선택" data-i18n-aria-label="languageLabel">
+        <span id="languageCurrent">English</span>
+        <svg viewBox="0 0 12 8" aria-hidden="true"><path d="m1 1 5 5 5-5"></path></svg>
+      </summary>
+      <div class="preference-options">
+        <div role="listbox" aria-label="언어 선택" data-i18n-aria-label="languageLabel">
+          <button type="button" class="preference-option language-option" data-language="ko" role="option" aria-selected="false">한국어</button>
+          <button type="button" class="preference-option language-option active" data-language="en" role="option" aria-selected="true">English</button>
+        </div>
+        <button type="button" class="preference-reset" id="languageReset" data-i18n="languageAuto" hidden>Follow device language</button>
+      </div>
+    </details>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="editor" aria-label="사진 편집기" data-i18n-aria-label="editorLabel">
+      <div class="editor-heading">
+        <div>
+          <p class="eyebrow editor-eyebrow">Gakin / PHOTO STUDIO</p>
+          <h1 data-i18n="heroTitle">사진에 시간 각인</h1>
+          <p class="intro" data-i18n="heroDescription">사진에 시간을 새기고, 원하는 모습 그대로 저장하세요.</p>
+        </div>
+        <div class="privacy-pill"><span aria-hidden="true"></span><b data-i18n="onDevice">사진은 기기에서 처리</b></div>
+      </div>
+
+      <div class="workspace">
+        <div class="preview-column">
+          <div class="preview-head"><strong data-i18n="previewTitle">작업 미리보기</strong><span class="preview-live"><i aria-hidden="true"></i><b data-i18n="previewLive">실시간</b></span></div>
+          <div class="preview-stage" id="dropZone">
+            <div class="empty-state" id="emptyState">
+              <div class="dial" aria-hidden="true">
+                <span class="dial-hand"></span>
+                <span class="dial-dot"></span>
+              </div>
+              <strong data-i18n="choosePhoto">사진을 선택하세요</strong>
+              <span>JPG · PNG · WEBP · HEIC</span>
+              <div class="upload-actions">
+                <button class="primary-button" id="selectBtn" type="button" data-i18n="selectPhoto">사진 선택</button>
+                <button class="icon-button" id="cameraBtn" type="button" aria-label="카메라로 촬영" data-i18n-aria-label="useCamera">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5 7.7 7H5a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2.7L15 4.5H9Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                </button>
+              </div>
+            </div>
+            <img id="photoPreview" alt="선택한 사진 미리보기" data-i18n-alt="photoPreviewAlt">
+            <canvas class="stamp-overlay" id="stampOverlay" role="button" tabindex="0" aria-label="타임스탬프 위치. 끌거나 방향키로 이동할 수 있습니다" data-i18n-aria-label="stampPositionLabel"></canvas>
+            <div class="drag-tip" id="dragTip" data-i18n="dragTip">끌어서 위치 이동</div>
+          </div>
+          <div class="file-strip" id="fileStrip" hidden>
+            <div><span class="file-indicator"></span><strong id="fileName">photo.jpg</strong><small id="fileMeta">3024 × 4032 · JPG</small></div>
+            <button type="button" id="replaceBtn" data-i18n="replacePhoto">다른 사진</button>
+          </div>
+        </div>
+
+        <form class="control-panel" id="editorForm">
+          <fieldset>
+            <legend><span>01</span><b data-i18n="timeSection">시간</b></legend>
+            <div class="field-grid two time-fields">
+              <label><span data-i18n="dateLabel">날짜</span><span class="date-time-control"><span class="date-time-face" id="dateDisplay" aria-hidden="true"></span><svg class="date-time-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="15" rx="2"/><path d="M8 3v5m8-5v5M4 10h16"/></svg><input id="dateInput" type="date" required></span></label>
+              <label><span data-i18n="timeLabel">시간</span><span class="date-time-control"><span class="date-time-face" id="timeDisplay" aria-hidden="true"></span><svg class="date-time-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><input id="timeInput" type="time" step="1" required></span></label>
+            </div>
+            <div class="choice-row" aria-label="시간 빠른 선택">
+              <button type="button" class="chip active" id="customBtn" data-i18n="customTime">사용자 지정</button>
+              <button type="button" class="chip" id="originalBtn" disabled data-i18n="originalTime">원본 촬영 시간</button>
+            </div>
+            <p class="time-source-note" id="timeSourceNote" hidden></p>
+          </fieldset>
+
+          <fieldset>
+            <legend><span>02</span><b data-i18n="designSection">디자인</b></legend>
+            <div class="style-scroll" id="stylePicker" role="radiogroup" aria-label="타임스탬프 디자인" data-i18n-aria-label="designGroupLabel">
+              <button type="button" class="style-card selected" data-style="classic" role="radio" aria-checked="true"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleClassic">클래식</b></button>
+              <button type="button" class="style-card" data-style="minimal" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleMinimal">미니멀</b></button>
+              <button type="button" class="style-card" data-style="cctv" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b>CCTV</b></button>
+              <button type="button" class="style-card" data-style="lcd" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b>LCD</b></button>
+              <button type="button" class="style-card" data-style="proof" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleFilm">필름</b></button>
+              <button type="button" class="style-card" data-style="postcard" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="stylePostcard">포스트카드</b></button>
+              <button type="button" class="style-card" data-style="digital" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleDigital">디지털</b></button>
+              <button type="button" class="style-card" data-style="digital-clear" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleDigitalClear">디지털 · 투명</b></button>
+              <button type="button" class="style-card" data-style="story" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleStory">스토리 손글씨</b></button>
+              <button type="button" class="style-card" data-style="vhs" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleVhs">VHS</b></button>
+              <button type="button" class="style-card" data-style="tape" role="radio" aria-checked="false"><span class="sample"><canvas aria-hidden="true"></canvas></span><b data-i18n="styleTape">종이 테이프</b></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span>03</span><b data-i18n="detailsSection">세부 설정</b></legend>
+            <label><span data-i18n="captionLabel">짧은 문구</span><input id="labelInput" type="text" maxlength="28" placeholder="예: 성수동, 서울" data-i18n-placeholder="captionPlaceholder"></label>
+            <div class="field-grid two details-grid">
+              <label><span data-i18n="displayFormat">표시 형식</span><select id="dateFormat"><option value="dot">2026. 09. 29</option><option value="dash">2026-09-29</option><option value="dash-seconds">2026-09-29 16:09:13</option><option value="film">'26 09 29</option><option value="eng">29 SEP 2026</option></select></label>
+              <label><span data-i18n="timezoneLabel">시간대</span><select id="timezone"><option value="+09:00" data-i18n="tzSeoul">서울 · UTC+9</option><option value="+00:00">UTC</option><option value="-08:00">LA · UTC-8</option><option value="-05:00" data-i18n="tzNewYork">뉴욕 · UTC-5</option><option value="+01:00" data-i18n="tzParis">파리 · UTC+1</option><option value="+08:00" data-i18n="tzSingapore">싱가포르 · UTC+8</option></select></label>
+            </div>
+            <label class="range-label"><span><b data-i18n="sizeLabel">크기</b><output id="sizeOutput">7%</output></span><input id="sizeInput" type="range" min="4" max="14" value="7"></label>
+          </fieldset>
+
+          <fieldset>
+            <legend><span>04</span><b data-i18n="fileSection">파일</b></legend>
+            <div class="field-grid two">
+              <label><span data-i18n="saveFormat">저장 형식</span><select id="outputFormat"><option value="image/jpeg" data-i18n="jpgOption">JPG · 촬영시간 포함</option><option value="image/png" data-i18n="pngOption">PNG · 무손실</option><option value="image/webp" data-i18n="webpOption">WEBP · 작은 용량</option></select></label>
+              <label><span data-i18n="qualityLabel">화질</span><select id="quality"><option value="0.95" data-i18n="qualityBest">최고 화질</option><option value="0.86" data-i18n="qualityBalanced">균형</option><option value="0.72" data-i18n="qualitySmall">작은 용량</option></select></label>
+            </div>
+            <p class="format-note" id="formatNote"><span>EXIF</span><b data-i18n="exifNote">지정한 촬영시간과 시간대가 JPG 파일에 기록됩니다.</b></p>
+          </fieldset>
+
+          <div class="export-bar">
+            <button class="export-button" id="exportBtn" type="button" disabled>
+              <span data-i18n="makePhoto">타임스탬프 사진 만들기</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
+            </button>
+            <p data-i18n="originalUnchanged">원본 사진은 변경되지 않습니다.</p>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
+  <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+
+  <dialog id="resultDialog" class="result-dialog">
+    <button class="dialog-close" type="button" aria-label="닫기" data-i18n-aria-label="closeLabel">×</button>
+    <div class="result-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>
+    </div>
+    <p class="eyebrow">READY TO SAVE</p>
+    <h2 data-i18n="resultTitle">새 사진을 만들었어요.</h2>
+    <p data-i18n="resultDescription">원본은 그대로 두고, 타임스탬프가 들어간 복사본을 준비했습니다.</p>
+    <div class="result-preview"><img id="resultImage" alt="완성된 사진 미리보기" data-i18n-alt="resultPreviewAlt"></div>
+    <dl class="metadata-grid">
+      <div><dt data-i18n="captureTime">촬영 시간</dt><dd id="resultDate">—</dd></div>
+      <div><dt data-i18n="fileSection">파일</dt><dd id="resultFile">—</dd></div>
+      <div><dt data-i18n="metadataLabel">메타데이터</dt><dd id="resultExif">—</dd></div>
+    </dl>
+    <div class="result-actions">
+      <button class="share-button" id="shareBtn" type="button" data-i18n="sharePhoto">사진 앱으로 공유</button>
+      <button class="download-button" id="downloadBtn" type="button" data-i18n="saveFile">파일로 저장</button>
+    </div>
+  </dialog>
+
+  <div class="processing" id="processing" hidden aria-live="polite">
+    <span class="processing-ring"></span>
+    <strong data-i18n="processingTitle">사진에 시간을 새기는 중</strong>
+    <small data-i18n="processingDescription">창을 닫지 말아주세요.</small>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./heic2any.min.js"></script>
+  <script type="module" src="./app.js?v=20260929-21"></script>
+</body>
+</html>
